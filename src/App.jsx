@@ -1,14 +1,27 @@
 import anecdotesService from "./services/anecdotes";
 import AnecdoteForm from "./components/AnecdoteForm";
 import Notification from "./components/Notification";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const App = () => {
+  /* REACT QUERY */
+  const queryClient = useQueryClient();
+
   // Retrieve anecdotes from server using React Query (tanstack)
   const anecdotesQuery = useQuery({
     queryKey: ["anecdotes"],
     queryFn: anecdotesService.getAll,
   });
+
+  // Create mutation for updating anecdotes
+  const updateAnecdoteMutation = useMutation({
+    mutationFn: anecdotesService.update,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+    },
+  });
+
+  /* GUARD STATEMENTS */
 
   // When loading
   if (anecdotesQuery.isPending) {
@@ -23,19 +36,16 @@ const App = () => {
   // When success
   const anecdotes = anecdotesQuery.data;
 
-  console.log(anecdotes);
-
   const handleVote = (anecdote) => {
-    console.log("vote");
+    // Perform the vote
+    const anecdoteVoted = {
+      ...anecdote,
+      votes: anecdote.votes + 1,
+    };
+    // Use a mutation tu update the voted anecdote
+    updateAnecdoteMutation.mutate(anecdoteVoted);
+    // --> the mutation should sync the server with the state of the front end, triggering a rerender
   };
-
-  // const anecdotes = [
-  //   {
-  //     content: "If it hurts, do it more often",
-  //     id: "47145",
-  //     votes: 0,
-  //   },
-  // ];
 
   return (
     <div>
