@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import anecdotesService from "../services/anecdotes";
+import NotificationContext from "./NotificationContext";
+import { useContext } from "react";
 
 const AnecdoteForm = () => {
+  /* HOOKS */
+
   const queryClient = useQueryClient();
 
   // Define mutation for creation
@@ -12,6 +16,8 @@ const AnecdoteForm = () => {
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
     },
   });
+
+  const [notification, notificationDispatch] = useContext(NotificationContext);
 
   const onCreate = (event) => {
     event.preventDefault();
@@ -24,6 +30,16 @@ const AnecdoteForm = () => {
     };
 
     newAnecdoteMutation.mutate(newAnecdote);
+
+    // Show notification for 5 seconds
+    const notification = `You created '${content}'`;
+    const notificationAction = { type: "SET", payload: notification };
+
+    notificationDispatch(notificationAction);
+
+    setTimeout(() => {
+      notificationDispatch({ type: "UNSET" });
+    }, 5000);
   };
 
   return (

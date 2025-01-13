@@ -2,9 +2,11 @@ import anecdotesService from "./services/anecdotes";
 import AnecdoteForm from "./components/AnecdoteForm";
 import Notification from "./components/Notification";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import NotificationContext from "./components/NotificationContext";
+import { useContext } from "react";
 
 const App = () => {
-  /* REACT QUERY */
+  /* HOOKS  */
   const queryClient = useQueryClient();
 
   // Retrieve anecdotes from server using React Query (tanstack)
@@ -20,6 +22,8 @@ const App = () => {
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
     },
   });
+
+  const [notification, notificationDispatch] = useContext(NotificationContext);
 
   /* GUARD STATEMENTS */
 
@@ -45,6 +49,15 @@ const App = () => {
     // Use a mutation tu update the voted anecdote
     updateAnecdoteMutation.mutate(anecdoteVoted);
     // --> the mutation should sync the server with the state of the front end, triggering a rerender
+
+    // Notificate user
+    const notification = `You voted '${anecdote.content}'`;
+    const notificationAction = { type: "SET", payload: notification };
+    notificationDispatch(notificationAction);
+
+    setTimeout(() => {
+      notificationDispatch({ type: "UNSET" });
+    }, 5000);
   };
 
   return (
