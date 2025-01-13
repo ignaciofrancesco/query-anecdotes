@@ -7,6 +7,9 @@ import { useContext } from "react";
 
 const App = () => {
   /* HOOKS  */
+
+  const [notification, notificationDispatch] = useContext(NotificationContext);
+
   const queryClient = useQueryClient();
 
   // Retrieve anecdotes from server using React Query (tanstack)
@@ -18,12 +21,19 @@ const App = () => {
   // Create mutation for updating anecdotes
   const updateAnecdoteMutation = useMutation({
     mutationFn: anecdotesService.update,
-    onSuccess: () => {
+    onSuccess: (newAnecdote) => {
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+
+      // Notificate user
+      const notification = `You voted '${newAnecdote.content}'`;
+      const notificationAction = { type: "SET", payload: notification };
+      notificationDispatch(notificationAction);
+
+      setTimeout(() => {
+        notificationDispatch({ type: "UNSET" });
+      }, 5000);
     },
   });
-
-  const [notification, notificationDispatch] = useContext(NotificationContext);
 
   /* GUARD STATEMENTS */
 
@@ -49,15 +59,6 @@ const App = () => {
     // Use a mutation tu update the voted anecdote
     updateAnecdoteMutation.mutate(anecdoteVoted);
     // --> the mutation should sync the server with the state of the front end, triggering a rerender
-
-    // Notificate user
-    const notification = `You voted '${anecdote.content}'`;
-    const notificationAction = { type: "SET", payload: notification };
-    notificationDispatch(notificationAction);
-
-    setTimeout(() => {
-      notificationDispatch({ type: "UNSET" });
-    }, 5000);
   };
 
   return (

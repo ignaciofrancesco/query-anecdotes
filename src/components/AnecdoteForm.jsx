@@ -5,19 +5,39 @@ import { useContext } from "react";
 
 const AnecdoteForm = () => {
   /* HOOKS */
+  const [notification, notificationDispatch] = useContext(NotificationContext);
 
   const queryClient = useQueryClient();
 
   // Define mutation for creation
   const newAnecdoteMutation = useMutation({
     mutationFn: anecdotesService.create,
-    onSuccess: () => {
+    onSuccess: (newAnecdote) => {
       // Invalidate the anecdotes query --> will keep sync between server and frontend
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+
+      // Show notification for 5 seconds
+      const notification = `You created '${newAnecdote.content}'`;
+      const notificationAction = { type: "SET", payload: notification };
+
+      notificationDispatch(notificationAction);
+
+      setTimeout(() => {
+        notificationDispatch({ type: "UNSET" });
+      }, 5000);
+    },
+    onError: (error) => {
+      const notificationAction = {
+        type: "SET",
+        payload: error.response.data.error,
+      };
+      notificationDispatch(notificationAction);
+
+      setTimeout(() => {
+        notificationDispatch({ type: "UNSET" });
+      }, 5000);
     },
   });
-
-  const [notification, notificationDispatch] = useContext(NotificationContext);
 
   const onCreate = (event) => {
     event.preventDefault();
@@ -30,16 +50,6 @@ const AnecdoteForm = () => {
     };
 
     newAnecdoteMutation.mutate(newAnecdote);
-
-    // Show notification for 5 seconds
-    const notification = `You created '${content}'`;
-    const notificationAction = { type: "SET", payload: notification };
-
-    notificationDispatch(notificationAction);
-
-    setTimeout(() => {
-      notificationDispatch({ type: "UNSET" });
-    }, 5000);
   };
 
   return (
